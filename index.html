@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>உழவர் உதவி (Uzhavar Assistant)</title>
+    <!-- Use Google Fonts for standard, premium typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --accent-color: #8BC34A;
+            --bg-light: #F9F9F9;
+            --text-dark: #333333;
+            --white: #FFFFFF;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; padding: 0;
+            background: linear-gradient(135deg, #e0f7fa 0%, #c8e6c9 100%);
+            font-family: 'Roboto', sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+
+        .device-frame {
+            position: relative;
+            width: 400px; height: 850px;
+            background-color: var(--bg-light);
+            border: 14px solid #1a1a1a;
+            border-radius: 45px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3), inset 0 0 0 2px #444;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+
+        .app-bar {
+            background-color: var(--primary-color);
+            color: var(--white);
+            height: 60px;
+            display: flex; align-items: center; padding: 0 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        .menu-btn {
+            background: none; border: none; color: var(--white);
+            margin-right: 16px; cursor: pointer; border-radius: 50%;
+            width: 40px; height: 40px;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .app-title { font-size: 20px; font-weight: 500; }
+
+        .main-content {
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: space-between; padding: 24px;
+            position: relative; z-index: 5;
+        }
+
+        .instruction-container {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            padding: 10px;
+        }
+
+        /* Fixed Text Alignment and Box styling */
+        .instruction-box {
+            background: var(--white);
+            padding: 24px 16px;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+            width: 95%; /* Better fit */
+            text-align: center;
+            opacity: 0; transform: translateY(20px);
+            transition: all 0.5s ease;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 150px; /* Keep height stable */
+        }
+        .instruction-box.visible { opacity: 1; transform: translateY(0); }
+
+        .instruction-text {
+            font-size: 22px; 
+            font-weight: 700; color: var(--text-dark);
+            line-height: 1.5;
+            word-wrap: break-word; 
+            text-align: center;
+        }
+
+        .voice-indicator {
+            text-align: center; color: var(--primary-dark);
+            font-size: 18px; font-weight: 500;
+            margin-bottom: 24px; opacity: 0;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .voice-indicator.active { opacity: 1; }
+        .mic-icon.active { animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .button-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+            padding-bottom: 20px;
+        }
+
+        .btn {
+            height: 90px; border: none; border-radius: 20px; color: var(--white);
+            font-size: 20px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-start { background-color: var(--primary-color); }
+        .btn-done { background-color: var(--primary-color); }
+        .btn-speak { background-color: var(--primary-dark); }
+        .btn-repeat { background-color: var(--accent-color); }
+
+        .toast {
+            position: absolute; bottom: 150px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(0,0,0,0.8); color: white;
+            padding: 12px 24px; border-radius: 50px; font-size: 14px;
+            opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 100;
+            white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Drawer CSS */
+        .drawer-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.3s;}
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+        .drawer { position: absolute; top:0; left:-280px; width:280px; height:100%; background: var(--white); z-index: 30; transition: left 0.3s; display: flex; flex-direction: column; }
+        .drawer.open { left: 0; }
+        .drawer-header { background: var(--primary-color); color: white; padding: 24px; height: 180px; display: flex; align-items: flex-end; font-size: 24px; font-weight: bold; }
+        .drawer-item { padding: 16px 24px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 16px; color: var(--text-dark); transition: background 0.2s;}
+        .drawer-item:hover { background: #f0f0f0; }
+
+        /* ------------------------------------------------------------------
+           About Modal (Mediq Teal Clone) 
+           ------------------------------------------------------------------ */
+        .about-modal {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(26, 77, 82, 0.85); /* Mediq dark teal overlay */
+            z-index: 50; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            padding: 24px;
+        }
+        .about-modal.open { opacity: 1; pointer-events: auto; }
+
+        .about-card {
+            background: #ffffff; border-radius: 24px;
+            width: 100%; padding: 32px 24px;
+            position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .about-modal.open .about-card { transform: scale(1); }
+
+        .close-btn {
+            position: absolute; top: 16px; right: 16px;
+            background: #f1f5f9; border: none; width: 32px; height: 32px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer; color: #64748b; font-weight: bold;
+        }
+
+        .about-header { text-align: center; margin-bottom: 24px; }
+        .icon-circle {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: rgba(19, 163, 163, 0.1); color: #13a3a3; /* Mediq primary teal */
+            display: inline-flex; justify-content: center; align-items: center;
+            margin-bottom: 16px;
+        }
+        .icon-circle .material-icons { font-size: 32px; }
+        .about-header h2 { margin: 0; font-size: 26px; color: #0f172a; font-weight: 800; }
+
+        .founder-section {
+            display: flex; align-items: center; gap: 16px;
+            background: #f8fafc; padding: 16px; border-radius: 16px; margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        .avatar {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: #e2e8f0; color: #475569; font-weight: bold; font-size: 18px;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .founder-info h3 { margin: 0 0 4px 0; font-size: 18px; color: #0f172a; font-weight: 700;}
+        .founder-info p { margin: 0; font-size: 14px; color: #13a3a3; font-weight: 600; }
+
+        .features { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .feature-item {
+            display: flex; align-items: center; gap: 16px; padding: 12px;
+            border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;
+        }
+        .feat-icon-box {
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .feat-text b { font-size: 15px; color: #0f172a; display: block; margin-bottom: 2px;}
+        .feat-text span { font-size: 13px; color: #64748b; }
+
+        .quote-box {
+            background: #f8fafc; padding: 16px; border-radius: 16px;
+            text-align: center; font-style: italic; color: #64748b; font-size: 14px;
+            border-left: 4px solid #13a3a3;
+        }
+    </style>
+</head>
+<body>
+    <div class="device-frame">
+        <div class="app-bar">
+            <button class="menu-btn" onclick="toggleDrawer()"><span class="Material-Icons">☰</span></button>
+            <span class="app-title">உழவர் உதவி</span>
+        </div>
+
+        <!-- Sidebar Drawer -->
+        <div class="drawer-overlay" id="overlay" onclick="toggleDrawer()"></div>
+        <div class="drawer" id="drawer">
+            <div class="drawer-header">உழவர் உதவி</div>
+            <div class="drawer-item" onclick="openAboutModal()"><span class="material-icons">info</span> பற்றி (About)</div>
+            <div class="drawer-item" onclick="openInstagram()"><span class="material-icons">contact_support</span> தொடர்பு (Contact)</div>
+        </div>
+
+        <div class="main-content">
+            <div class="instruction-container">
+                <div class="instruction-box visible" id="instructionBox">
+                    <div class="instruction-text" id="instructionText">தொடங்கு பட்டனை அழுத்தி தொடங்கவும்.</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="voice-indicator" id="voiceIndicator">
+                    <span class="material-icons mic-icon" id="micIcon" style="font-size: 24px;">mic</span> 
+                    <span id="voiceText">கேட்கிறது…</span>
+                </div>
+
+                <div class="button-grid">
+                    <button class="btn btn-start" onclick="handleNextStep()"><span class="material-icons">power_settings_new</span> தொடங்கு</button>
+                    <button class="btn btn-done" onclick="handleNextStep()"><span class="material-icons">check_circle</span> ஆச்சு</button>
+                    <button class="btn btn-speak" onclick="startListening()"><span class="material-icons">mic</span> பேசு</button>
+                    <button class="btn btn-repeat" onclick="repeatMessage()"><span class="material-icons">replay</span> மறுபடியும்</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="toast" id="toast">Message</div>
+
+        <!-- NEW ABOUT MODAL (Mediq Style) -->
+        <div class="about-modal" id="aboutModal">
+            <div class="about-card">
+                <button class="close-btn" onclick="closeAboutModal()">✕</button>
+                <div class="about-header">
+                    <div class="icon-circle"><span class="material-icons">rocket_launch</span></div>
+                    <h2>NIVAX <span style="color: #13a3a3;">Technologies</span></h2>
+                </div>
+                
+                <div class="founder-section">
+                    <div class="avatar">NP</div>
+                    <div class="founder-info">
+                        <h3>NITHESH P</h3>
+                        <p>Founder & Lead Developer</p>
+                    </div>
+                </div>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <div class="feat-icon-box" style="background: rgba(33, 150, 243, 0.1); color: #2196F3;">
+                            <span class="material-icons">code</span>
+                        </div>
+                        <div class="feat-text"><b>Modern Tech</b><span>Built for the future.</span></div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feat-icon-box" style="background: rgba(156, 39, 176, 0.1); color: #9C27B0;">
+                            <span class="material-icons">memory</span>
+                        </div>
+                        <div class="feat-text"><b>AI Powered</b><span>Smart voice tech.</span></div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feat-icon-box" style="background: rgba(76, 175, 80, 0.1); color: #4CAF50;">
+                            <span class="material-icons">public</span>
+                        </div>
+                        <div class="feat-text"><b>Global Vision</b><span>Empowering users globally.</span></div>
+                    </div>
+                </div>
+
+                <div class="quote-box">
+                    "Innovation designed for everyday people."
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let currentStep = -1;
+    let currentMessage = "";
+    const stepMessages = [
+        "வணக்கம்! நான் உங்களுக்கு உதவுகிறேன்",
+        "முதலில் லாகின் செய்யுங்க... முடிச்சா சொல்லுங்க",
+        "விவசாயியின் ஆதார் எண் உள்ளிடுங்க... முடிச்சா சொல்லுங்க",
+        "OTP அல்லது கைரேகை வைங்க... முடிச்சா சொல்லுங்க",
+        "உரம் தேர்வு செய்யுங்க",
+        "எத்தனை மூட்டை வேணும்?",
+        "உரத்துக்கு விலை உள்ளிடுங்க",
+        "எல்லா விவரங்களையும் சரி பார்த்து உறுதிப்படுத்துங்க",
+        "பில் அச்சாகும்"
+    ];
+
+    const instructionBox = document.getElementById("instructionBox");
+    const instructionText = document.getElementById("instructionText");
+    const voiceIndicator = document.getElementById("voiceIndicator");
+    const micIcon = document.getElementById("micIcon");
+
+    /* ----------- UI Logic ----------- */
+    function toggleDrawer() {
+        document.getElementById('drawer').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('open');
+    }
+
+    // New Instagram navigate logic
+    function openInstagram() {
+        toggleDrawer(); // Close drawer
+        window.open('https://www.instagram.com/nivax.tech', '_blank'); // Open Insta in new tab
+    }
+
+    // Modal Logic
+    function openAboutModal() {
+        if(document.getElementById('drawer').classList.contains('open')) toggleDrawer();
+        document.getElementById('aboutModal').classList.add('open');
+    }
+    function closeAboutModal() {
+        document.getElementById('aboutModal').classList.remove('open');
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function updateTextSmoothly(text) {
+        instructionBox.classList.remove("visible");
+        setTimeout(() => {
+            instructionText.innerHTML = text;
+            instructionBox.classList.add("visible");
+        }, 300);
+    }
+
+    /* ----------- Reliable Google Translate TTS ----------- */
+    let currentAudio = null;
+    function speakText(text) {
+        if(currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
+        const url = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ta&q=' + encodeURIComponent(text);
+        currentAudio = new Audio(url);
+        currentAudio.onended = () => {
+            if(currentStep >= 0 && currentStep < stepMessages.length - 1) {
+                setTimeout(startListening, 300);
+            }
+        };
+        currentAudio.play().catch(e => console.log("Audio play prevented by browser", e));
+    }
+
+    /* ----------- Speech to Text ----------- */
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isListening = false;
+
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ta-IN'; 
+        recognition.interimResults = false;
+        
+        recognition.onstart = function() {
+            setListeningState(true, "கேட்கிறது…");
+        };
+        
+        recognition.onresult = function(event) {
+            setListeningState(false);
+            const transcript = event.results[0][0].transcript.toLowerCase();
+            processUserSpeech(transcript);
+        };
+        
+        recognition.onerror = function(event) {
+            setListeningState(false);
+            if(event.error === 'not-allowed') showToast("Please allow Microphone access.");
+        };
+        
+        recognition.onend = function() { setListeningState(false); };
+    }
+
+    function setListeningState(active, text = "") {
+        isListening = active;
+        if (active) {
+            document.getElementById("voiceText").textContent = text;
+            voiceIndicator.classList.add("active");
+            micIcon.classList.add("active");
+        } else {
+            voiceIndicator.classList.remove("active");
+            micIcon.classList.remove("active");
+        }
+    }
+
+    function startListening() {
+        if (!recognition) return showToast("Your browser doesn't support Voice Typing.");
+        if (currentAudio) currentAudio.pause();
+        try { 
+            if(!isListening) recognition.start(); 
+        } catch(e) { console.error(e); }
+    }
+
+    function processUserSpeech(text) {
+        if (!text || text.trim().length < 1) return; 
+        
+        showToast('நீங்கள் சொன்னது: "' + text + '"');
+        
+        const repeatWords = ["மறுபடியும்", "மீண்டும்", "திரும்ப", "repeat", "என்னது", "விளங்கல", "புரியல", "once more"];
+        const noWords = ["இல்லை", "இல்ல", "no", "வேண்டாம்", "தப்பு", "மாத்து", "wait", "நில்லு", "பொறு", "இரு"];
+        
+        let recognizedCommand = "next"; 
+        
+        if (repeatWords.some(word => text.includes(word))) {
+            recognizedCommand = "repeat";
+        } else if (noWords.some(word => text.includes(word))) {
+            recognizedCommand = "no";
+        }
+
+        if (recognizedCommand === "repeat") {
+            setTimeout(repeatMessage, 1000);
+        } else if (recognizedCommand === "no") {
+            speakText("சரி, நிதானமாக சொல்லுங்கள்.");
+            updateTextSmoothly("சரி, நிதானமாக சொல்லுங்கள்.");
+            setTimeout(() => { if(currentStep >= 0) playStep(currentStep); }, 3500);
+        } else {
+            setTimeout(() => { showToast("✅ பதிவு செய்யப்பட்டது"); }, 500);
+            setTimeout(handleNextStep, 1500); 
+        }
+    }
+
+    /* ----------- Flow Control ----------- */
+    function playStep(step) {
+        currentMessage = stepMessages[step];
+        updateTextSmoothly(currentMessage);
+        speakText(currentMessage);
+    }
+
+    function handleNextStep() {
+        if (currentAudio) currentAudio.pause();
+        try { if(isListening) recognition.abort(); } catch(e){}
+
+        if (currentStep === -1) {
+            currentStep = 0;
+            playStep(currentStep);
+            return;
+        }
+
+        if (currentStep < stepMessages.length - 1) {
+            currentStep++;
+            playStep(currentStep);
+        } else {
+            const doneMsg = "அனைத்தும் முடிந்தது. பில் அச்சாகிறது. நன்றி!";
+            updateTextSmoothly(doneMsg);
+            speakText(doneMsg);
+            currentStep = -1; 
+        }
+    }
+
+    function repeatMessage() {
+        if (currentStep === -1) return showToast("தொடங்கு பட்டனை அழுத்தவும்");
+        playStep(currentStep);
+    }
+</script>
+</body>
+</html>

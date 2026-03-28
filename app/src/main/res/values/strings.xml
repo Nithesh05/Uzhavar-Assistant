@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Uzhavar Assistant (#உழவர்உதவி)</string>
+    <string name="title_activity_main">Uzhavar Assistant</string>
+    <string name="btn_start">தொடங்கு</string>
+    <string name="btn_done">ஆச்சு</string>
+    <string name="btn_yes">ஆம்</string>
+    <string name="btn_no">இல்லை</string>
+    <string name="btn_repeat">மறுபடியும்</string>
+    <string name="btn_speak">பேசு</string>
+    
+    <string name="menu_about">பற்றி</string>
+    <string name="menu_contact">தொடர்பு</string>
+    <string name="menu_feedback">கருத்து</string>
+    <string name="nav_header_title">உழவர் உதவி</string>
+    
+    <!-- Drawer toggles -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+</resources>
