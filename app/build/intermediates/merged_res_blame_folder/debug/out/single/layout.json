@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.uzhavar.assistant.app-mergeDebugResources-42:/layout/activity_main.xml",
+        "source": "com.uzhavar.assistant.app-main-45:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.uzhavar.assistant.app-mergeDebugResources-42:/layout/content_main.xml",
+        "source": "com.uzhavar.assistant.app-main-45:/layout/content_main.xml"
+    },
+    {
+        "merged": "com.uzhavar.assistant.app-mergeDebugResources-42:/layout/app_bar_main.xml",
+        "source": "com.uzhavar.assistant.app-main-45:/layout/app_bar_main.xml"
+    },
+    {
+        "merged": "com.uzhavar.assistant.app-mergeDebugResources-42:/layout/nav_header_main.xml",
+        "source": "com.uzhavar.assistant.app-main-45:/layout/nav_header_main.xml"
+    }
+]
